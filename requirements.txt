@@ -1,0 +1,3 @@
+Flask
+numpy
+numpy_financial
