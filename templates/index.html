@@ -1,102 +1,108 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Investment Checker</title>
-<style>
-body { font-family: Arial; max-width: 600px; margin: auto; padding: 20px; }
-input, button { padding: 10px; width: 100%; margin-bottom: 10px; }
-button { background: #4CAF50; color: white; border: none; cursor: pointer; }
-button:hover { opacity: 0.9; }
-.result-box { background: #f1f1f1; padding: 15px; border-radius: 5px; margin-top: 20px; }
-.good { color: green; font-weight: bold; }
-.bad { color: red; font-weight: bold; }
-.rules-box, .actionable-box { margin-top: 15px; padding: 10px; border-radius: 5px; }
-.rules-box { background: #e0f7fa; }
-.actionable-box { background: #e8f5e9; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Comparison Tool</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f6fa;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #2a4d69;
+    }
+    form {
+      display: flex;
+      justify-content: space-between;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    .project {
+      width: 45%;
+    }
+    input, button {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      background: #2a9d8f;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #21867a;
+    }
+    .results {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    .box {
+      width: 45%;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    .better {
+      background: #d1ffd1;
+      padding: 10px;
+      margin-top: 20px;
+      text-align: center;
+      font-weight: bold;
+      border-radius: 8px;
+    }
+  </style>
 </head>
 <body>
+  <h1>Compare Two Projects</h1>
 
-<h2>Investment Decision Tool</h2>
-<p>Check if a business idea will make good money or not.</p>
+  <form method="POST">
+    <div class="project">
+      <h3>Project A</h3>
+      <label>Cashflows (comma-separated):</label>
+      <input type="text" name="cashflowsA" placeholder="-10000, 4000, 5000, 6000" required>
+    </div>
 
-<form method="post">
-  Initial Cost (money you spend first):
-  <input type="number" step="any" name="initial_cost" required>
+    <div class="project">
+      <h3>Project B</h3>
+      <label>Cashflows (comma-separated):</label>
+      <input type="text" name="cashflowsB" placeholder="-12000, 3000, 6000, 7000" required>
+    </div>
 
-  Cash Inflows per Year (use commas):
-  <input type="text" name="cashflows" placeholder="Example: 2000,3000,4000" required>
+    <div style="width:100%; margin-top:15px;">
+      <label>Discount rate (%):</label>
+      <input type="number" step="0.1" name="rate" placeholder="10" required>
+      <button type="submit">Compare Projects</button>
+    </div>
+  </form>
 
-  Number of Years:
-  <input type="number" name="years" required>
+  {% if resultA and resultB %}
+  <div class="results">
+    <div class="box">
+      <h3>Project A Results</h3>
+      <p><strong>{{ resultA.meaning }}</strong></p>
+      <p><em>{{ resultA.recommendation }}</em></p>
+    </div>
 
-  Discount Rate / Target Return (example: 0.10 = 10%):
-  <input type="number" step="any" name="rate" required>
-
-  <button type="submit">Check Investment</button>
-</form>
-
-{% if result %}
-<div class="result-box">
-
-  <!-- Quick Rules -->
-  <div class="rules-box">
-    <h4>Quick Rules</h4>
-    <p>• NPV should be above 0</p>
-    <p>• IRR should be higher than discount rate</p>
-    <p>• ARR should be higher than discount rate</p>
+    <div class="box">
+      <h3>Project B Results</h3>
+      <p><strong>{{ resultB.meaning }}</strong></p>
+      <p><em>{{ resultB.recommendation }}</em></p>
+    </div>
   </div>
 
-  <!-- Results & Meaning -->
-  <h3>Investment Results & Meaning</h3>
-
-  <p>
-    NPV: <b>{{ result.NPV }}</b> – 
-    {% if result.NPV > 0 %}
-      This means the project is expected to make more money than it costs. It is profitable.
-    {% else %}
-      This means the project might lose money. It is not generating enough profit.
-    {% endif %}
-  </p>
-
-  <p>
-    IRR: <b>{{ result.IRR }}</b> – 
-    {% if result.IRR > result.rate %}
-      The growth rate is higher than your target. The money grows fast.
-    {% else %}
-      The growth rate is below your target. The project grows slowly.
-    {% endif %}
-  </p>
-
-  <p>
-    ARR: <b>{{ result.ARR }}</b> – 
-    {% if result.ARR > result.rate %}
-      Average yearly profit is strong. Investment returns are good.
-    {% else %}
-      Average yearly profit is weak. Returns may not cover your expectations.
-    {% endif %}
-  </p>
-
-  <p class="{% if result.Decision == 'Good to invest' %}good{% else %}bad{% endif %}">
-    Overall Decision: {{ result.Decision }}
-  </p>
-
-  <!-- Actionable Steps -->
-  <div class="actionable-box">
-    <h4>Actionable Steps</h4>
-    <ul>
-      {% if result.Decision == 'Good to invest' %}
-        <li>Project looks good! You can go ahead and invest.</li>
-      {% else %}
-        {% for rec in result.recommendations %}
-          <li>{{ rec }}</li>
-        {% endfor %}
-      {% endif %}
-    </ul>
-  </div>
-
-</div>
-{% endif %}
-
+  <div class="better">{{ better_project }}</div>
+  {% endif %}
 </body>
 </html>
