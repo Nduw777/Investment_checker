@@ -1,102 +1,145 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Investment Checker</title>
-<style>
-body { font-family: Arial; max-width: 600px; margin: auto; padding: 20px; }
-input, button { padding: 10px; width: 100%; margin-bottom: 10px; }
-button { background: #4CAF50; color: white; border: none; cursor: pointer; }
-button:hover { opacity: 0.9; }
-.result-box { background: #f1f1f1; padding: 15px; border-radius: 5px; margin-top: 20px; }
-.good { color: green; font-weight: bold; }
-.bad { color: red; font-weight: bold; }
-.rules-box, .actionable-box { margin-top: 15px; padding: 10px; border-radius: 5px; }
-.rules-box { background: #e0f7fa; }
-.actionable-box { background: #e8f5e9; }
-</style>
+  <meta charset="UTF-8">
+  <title>Investment Checker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f6fa;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 700px;
+      margin: auto;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #264653;
+    }
+    .rules {
+      background: #e9f5f3;
+      border-left: 5px solid #2a9d8f;
+      padding: 10px;
+      margin-bottom: 20px;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      background: #2a9d8f;
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #21867a;
+    }
+    .results {
+      background: #fefefe;
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .recommendation {
+      background: #d8f3dc;
+      border-left: 5px solid #40916c;
+      padding: 10px;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    canvas {
+      margin-top: 20px;
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <h1>Investment Profit Checker</h1>
 
-<h2>Investment Decision Tool</h2>
-<p>Check if a business idea will make good money or not.</p>
+    <div class="rules">
+      <strong>Quick Rules:</strong>
+      <p>• NPV > 0 → The project is profitable.<br>
+      • IRR > Discount Rate → The project is worth investing.<br>
+      • ARR > Cost of Capital → The return is acceptable.</p>
+    </div>
 
-<form method="post">
-  Initial Cost (money you spend first):
-  <input type="number" step="any" name="initial_cost" required>
+    <form method="POST">
+      <label>Enter initial cost:</label>
+      <input type="number" step="0.01" name="initial_cost" placeholder="e.g. 10000" required>
 
-  Cash Inflows per Year (use commas):
-  <input type="text" name="cashflows" placeholder="Example: 2000,3000,4000" required>
+      <label>Enter cashflows separated by commas:</label>
+      <input type="text" name="cashflows" placeholder="4000, 5000, 6000" required>
 
-  Number of Years:
-  <input type="number" name="years" required>
+      <label>Number of years:</label>
+      <input type="number" name="years" placeholder="3" required>
 
-  Discount Rate / Target Return (example: 0.10 = 10%):
-  <input type="number" step="any" name="rate" required>
+      <label>Discount rate (%):</label>
+      <input type="number" step="0.1" name="rate" placeholder="10" required>
 
-  <button type="submit">Check Investment</button>
-</form>
+      <button type="submit">Check Investment</button>
+    </form>
 
-{% if result %}
-<div class="result-box">
+    {% if result %}
+    <div class="results">
+      <h3>Results:</h3>
+      <p><strong>NPV:</strong> {{ result.NPV }}</p>
+      <p><strong>IRR:</strong> {{ result.IRR }}</p>
+      <p><strong>ARR:</strong> {{ result.ARR }}</p>
+      <p><strong>Decision:</strong> {{ result.Decision }}</p>
 
-  <!-- Quick Rules -->
-  <div class="rules-box">
-    <h4>Quick Rules</h4>
-    <p>• NPV should be above 0</p>
-    <p>• IRR should be higher than discount rate</p>
-    <p>• ARR should be higher than discount rate</p>
-  </div>
-
-  <!-- Results & Meaning -->
-  <h3>Investment Results & Meaning</h3>
-
-  <p>
-    NPV: <b>{{ result.NPV }}</b> – 
-    {% if result.NPV > 0 %}
-      This means the project is expected to make more money than it costs. It is profitable.
-    {% else %}
-      This means the project might lose money. It is not generating enough profit.
-    {% endif %}
-  </p>
-
-  <p>
-    IRR: <b>{{ result.IRR }}</b> – 
-    {% if result.IRR > result.rate %}
-      The growth rate is higher than your target. The money grows fast.
-    {% else %}
-      The growth rate is below your target. The project grows slowly.
-    {% endif %}
-  </p>
-
-  <p>
-    ARR: <b>{{ result.ARR }}</b> – 
-    {% if result.ARR > result.rate %}
-      Average yearly profit is strong. Investment returns are good.
-    {% else %}
-      Average yearly profit is weak. Returns may not cover your expectations.
-    {% endif %}
-  </p>
-
-  <p class="{% if result.Decision == 'Good to invest' %}good{% else %}bad{% endif %}">
-    Overall Decision: {{ result.Decision }}
-  </p>
-
-  <!-- Actionable Steps -->
-  <div class="actionable-box">
-    <h4>Actionable Steps</h4>
-    <ul>
-      {% if result.Decision == 'Good to invest' %}
-        <li>Project looks good! You can go ahead and invest.</li>
-      {% else %}
+      <h4>Recommendations:</h4>
+      <ul>
         {% for rec in result.recommendations %}
           <li>{{ rec }}</li>
         {% endfor %}
-      {% endif %}
-    </ul>
+      </ul>
+
+      <canvas id="cashflowChart"></canvas>
+    </div>
+
+    <script>
+      const cashflows = {{ cashflows|tojson }};
+      if (cashflows.length > 0) {
+        const ctx = document.getElementById('cashflowChart').getContext('2d');
+        const labels = cashflows.map((_, i) => "Year " + (i + 1));
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Yearly Cashflow',
+              data: cashflows,
+              backgroundColor: cashflows.map(v => v >= 0 ? '#2a9d8f' : '#e63946')
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              title: { display: true, text: 'Cashflow Dashboard' },
+              legend: { display: false }
+            },
+            scales: {
+              y: { beginAtZero: true }
+            }
+          }
+        });
+      }
+    </script>
+    {% endif %}
   </div>
-
-</div>
-{% endif %}
-
 </body>
 </html>
