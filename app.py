@@ -9,47 +9,36 @@ def calculate_metrics(rate, cashflows):
     avg_profit = sum(cashflows[1:]) / (len(cashflows) - 1)
     arr = round((avg_profit / abs(cashflows[0])) * 100, 2)
 
-    meaning = f"NPV = {npv}. This means the project {'adds' if npv > 0 else 'loses'} value overall. "
-    meaning += f"IRR = {irr}%. A higher IRR is better. "
-    meaning += f"ARR = {arr}%. This shows the average yearly return."
+    # Combine results with easy meanings
+    meanings = [
+        f"NPV = {npv}. This means the project {'adds value (good)' if npv > 0 else 'loses value (bad)'}.",
+        f"IRR = {irr}%. This shows the rate of return. A higher value means better profitability.",
+        f"ARR = {arr}%. This tells the average yearly return based on accounting profit."
+    ]
 
-    # Smart recommendations
+    # Smart recommendations based on results
     if npv > 0 and irr > rate * 100:
-        rec = "This project looks profitable. You can continue investing or expand it carefully."
+        rec = "Your project looks profitable! You can go ahead or even expand it carefully."
     elif npv < 0:
-        rec = "This project may not be profitable. Try reducing costs, shortening time, or choosing another project."
+        rec = "Your project may lose money. Try reducing costs, shortening the project time, or investing in another option."
     else:
-        rec = "This project’s return is moderate. Try optimizing investments or reviewing your cash flow plan."
+        rec = "Your project has medium performance. Try optimizing your plan or reviewing your cashflows."
 
-    return {"npv": npv, "irr": irr, "arr": arr, "meaning": meaning, "recommendation": rec}
+    return meanings, rec
 
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    resultA = resultB = None
-    better_project = None
-
+    meanings = []
+    recommendation = ""
     if request.method == "POST":
-        rate = float(request.form["rate"]) / 100
-
-        cashflowsA = list(map(float, request.form.getlist("cashflowsA")))
-        cashflowsB = list(map(float, request.form.getlist("cashflowsB")))
-
-        resultA = calculate_metrics(rate, cashflowsA)
-        resultB = calculate_metrics(rate, cashflowsB)
-
-        # Comparison logic
-        if resultA["npv"] > resultB["npv"]:
-            better_project = "Project A seems more profitable based on NPV."
-        elif resultB["npv"] > resultA["npv"]:
-            better_project = "Project B seems more profitable based on NPV."
-        else:
-            better_project = "Both projects perform similarly."
-
-    return render_template("index.html",
-                           resultA=resultA,
-                           resultB=resultB,
-                           better_project=better_project)
+        try:
+            rate = float(request.form["rate"]) / 100
+            cashflows = list(map(float, request.form["cashflows"].split(",")))
+            meanings, recommendation = calculate_metrics(rate, cashflows)
+        except Exception as e:
+            recommendation = f"Error: {e}"
+    return render_template("index.html", meanings=meanings, recommendation=recommendation)
 
 
 if __name__ == "__main__":
