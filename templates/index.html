@@ -10,9 +10,8 @@ button:hover { opacity: 0.9; }
 .result-box { background: #f1f1f1; padding: 15px; border-radius: 5px; margin-top: 20px; }
 .good { color: green; font-weight: bold; }
 .bad { color: red; font-weight: bold; }
-.rules-box, .recommendations-box, .actionable-box { margin-top: 15px; padding: 10px; border-radius: 5px; }
+.rules-box, .actionable-box { margin-top: 15px; padding: 10px; border-radius: 5px; }
 .rules-box { background: #e0f7fa; }
-.recommendations-box { background: #fff3e0; }
 .actionable-box { background: #e8f5e9; }
 </style>
 </head>
@@ -81,16 +80,6 @@ button:hover { opacity: 0.9; }
   <p class="{% if result.Decision == 'Good to invest' %}good{% else %}bad{% endif %}">
     Overall Decision: {{ result.Decision }}
   </p>
-
-  <!-- Recommendations -->
-  <div class="recommendations-box">
-    <h4>Recommendations</h4>
-    <ul>
-      {% for rec in result.recommendations %}
-        <li>{{ rec }}</li>
-      {% endfor %}
-    </ul>
-  </div>
 
   <!-- Actionable Steps -->
   <div class="actionable-box">
